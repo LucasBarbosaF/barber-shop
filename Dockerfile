@@ -1,3 +1,22 @@
+# ============================================
+# Frontend - Vite
+# ============================================
+FROM node:22 AS frontend
+
+WORKDIR /var/www
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+
+# ============================================
+# Backend - Laravel
+# ============================================
 FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y \
@@ -22,14 +41,14 @@ RUN apt-get update && apt-get install -y \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Primeiro copia apenas os arquivos do Composer
+# Composer
 COPY composer.json composer.lock ./
 
-# Instala dependências sem executar scripts do Laravel
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -37,12 +56,16 @@ RUN composer install \
     --optimize-autoloader \
     --no-scripts
 
-# Agora copia todo o Laravel, incluindo o artisan
+# Código Laravel
 COPY . .
 
-# Executa os scripts do Laravel depois que artisan existe
+# Build do Vite
+COPY --from=frontend /var/www/public/build ./public/build
+
+# Laravel
 RUN php artisan package:discover --ansi
 
+# Permissões
 RUN chown -R www-data:www-data \
     /var/www/storage \
     /var/www/bootstrap/cache
@@ -51,10 +74,13 @@ RUN chmod -R 775 \
     /var/www/storage \
     /var/www/bootstrap/cache
 
+# Nginx
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Start
 COPY docker/start.sh /start.sh
 
 RUN chmod +x /start.sh
