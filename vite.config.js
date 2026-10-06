@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/admin.js',
                 'resources/js/booking.js',
                 'resources/css/login.css',
+                'resources/css/booking.css.'
             ],
             refresh: true,
         }),
