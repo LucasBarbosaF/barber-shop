@@ -2,14 +2,16 @@
 
 set -e
 
-echo "Iniciando Vite..."
+# Render fornece a porta através de PORT
+PORT="${PORT:-10000}"
 
-npm run dev -- --host 0.0.0.0 &
+sed -i "s/listen 10000;/listen ${PORT};/" \
+    /etc/nginx/conf.d/default.conf
 
-echo "Iniciando PHP-FPM..."
+# Cache Laravel
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
-php-fpm -D
-
-echo "Iniciando Nginx..."
-
-nginx -g "daemon off;"
+# Inicia PHP-FPM + Nginx
+exec /usr/bin/supervisord -n
