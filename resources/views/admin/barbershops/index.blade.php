@@ -1,5 +1,5 @@
 <x-app-layout title="Barbearias">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="h3 mb-0">Barbearias</h1>
             <p class="text-secondary mb-0">Todas as barbearias cadastradas na plataforma</p>
@@ -32,7 +32,7 @@
             </div>
         @else
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 table-stack">
                     <thead class="table-light">
                         <tr>
                             <th scope="col">Barbearia</th>

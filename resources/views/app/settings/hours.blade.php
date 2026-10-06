@@ -27,7 +27,7 @@
                         @foreach ($weekdays as $weekday => $label)
                             @php($businessHour = $hoursByWeekday->get($weekday))
                             <div class="col-sm-6 col-lg-4">
-                                <div class="d-flex justify-content-between border rounded p-2">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2">
                                     <span>{{ $label }}</span>
                                     @if ($businessHour)
                                         <span class="text-nowrap">{{ substr($businessHour->opens_at, 0, 5) }}–{{ substr($businessHour->closes_at, 0, 5) }}</span>

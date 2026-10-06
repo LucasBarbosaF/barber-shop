@@ -92,6 +92,55 @@ document.querySelectorAll('[data-toggle-password]').forEach((toggle) => {
 
 document.querySelector('[data-login-errors]')?.focus();
 
+/*
+ * Tabelas com a classe `table-stack` viram uma pilha de cartões abaixo de
+ * 768px (CSS em admin.css). Aqui os `data-label` de cada célula são copiados
+ * do cabeçalho — assim colunas condicionais (agenda com ou sem a coluna
+ * Barbeiro) continuam pareadas com o título certo — e a semântica de tabela
+ * que o `display: block` remove é devolvida via papéis ARIA.
+ */
+document.querySelectorAll('table.table-stack').forEach((table) => {
+    const headerRow = table.tHead?.rows[0];
+    const labels = headerRow ? [...headerRow.cells].map((cell) => cell.textContent.trim()) : [];
+
+    table.setAttribute('role', 'table');
+    table.tHead?.setAttribute('role', 'rowgroup');
+    table.tFoot?.setAttribute('role', 'rowgroup');
+    [...table.tBodies].forEach((body) => body.setAttribute('role', 'rowgroup'));
+
+    if (headerRow) {
+        headerRow.setAttribute('role', 'row');
+        [...headerRow.cells].forEach((cell) => cell.setAttribute('role', 'columnheader'));
+    }
+
+    [...table.tBodies].forEach((body) => {
+        [...body.rows].forEach((row) => {
+            row.setAttribute('role', 'row');
+            const cells = [...row.cells];
+
+            // Cabeçalho de grupo (ex.: "segunda, 06/10") vira faixa do cartão.
+            if (cells.length === 1 && cells[0].tagName === 'TH') {
+                cells[0].setAttribute('role', 'rowheader');
+                row.classList.add('is-stack-group');
+                return;
+            }
+
+            cells.forEach((cell, index) => {
+                cell.setAttribute('role', cell.tagName === 'TH' ? 'rowheader' : 'cell');
+
+                if (cell.tagName === 'TD' && labels.length === cells.length) {
+                    cell.dataset.label = labels[index];
+                }
+            });
+        });
+    });
+
+    [...(table.tFoot?.rows ?? [])].forEach((row) => {
+        row.setAttribute('role', 'row');
+        [...row.cells].forEach((cell) => cell.setAttribute('role', cell.tagName === 'TH' ? 'rowheader' : 'cell'));
+    });
+});
+
 document.querySelectorAll('[data-auto-show-modal]').forEach((modal) => {
     Modal.getOrCreateInstance(modal).show();
 });

@@ -60,12 +60,12 @@
     </div>
 
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h2 class="h5 mb-0">Serviços realizados</h2>
             <span class="badge text-bg-secondary">{{ $attendance->items->count() }} item(ns)</span>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-stack">
                 <thead class="table-light">
                     <tr>
                         <th>Serviço</th>
@@ -170,7 +170,7 @@
             <div class="card mb-4">
                 <div class="card-header"><h2 class="h5 mb-0">Recebimentos</h2></div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 table-stack">
                         <thead class="table-light">
                             <tr><th>Data</th><th>Forma</th><th class="text-end">Valor</th></tr>
                         </thead>

@@ -36,7 +36,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('app.agenda.index') }}">
                 <div class="row align-items-end g-3">
-                    <div class="col-6 col-md-3 col-xl-2">
+                    <div class="col-12 col-sm-6 col-md-3 col-xl-2">
                         <label for="start_date" class="form-label">Data inicial</label>
                         <input id="start_date" name="start_date" type="date" value="{{ $date }}"
                                class="form-control @error('start_date') is-invalid @enderror"
@@ -45,7 +45,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-6 col-md-3 col-xl-2">
+                    <div class="col-12 col-sm-6 col-md-3 col-xl-2">
                         <label for="end_date" class="form-label">Data final</label>
                         <input id="end_date" name="end_date" type="date" value="{{ $endDate }}"
                                min="{{ $date }}" class="form-control @error('end_date') is-invalid @enderror"
@@ -197,7 +197,7 @@
 
     <div class="card mb-4">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-stack">
                 <thead class="table-light">
                     <tr>
                         <th scope="col">Horário</th>
@@ -366,7 +366,7 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 table-stack">
                     <thead class="table-light">
                         <tr>
                             <th scope="col">Período</th>

@@ -237,7 +237,7 @@
             <span class="badge text-bg-light">{{ $commissions->count() }} lançamento(s)</span>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-stack">
                 <thead class="table-light">
                     <tr>
                         <th scope="col">Período</th>

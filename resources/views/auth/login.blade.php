@@ -65,7 +65,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <label for="password" class="form-label">Senha</label>
                             @if (Route::has('password.request'))
                                 <a class="auth-login-recovery" href="{{ route('password.request') }}">Esqueceu a senha?</a>

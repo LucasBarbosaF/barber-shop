@@ -55,3 +55,161 @@
     padding: 0.85rem 0 0.25rem;
     border-top: 1px solid #e9edf2;
 }
+
+/*
+ * Responsividade — ajustes que valem para o painel inteiro, em qualquer
+ * breakpoint. A ideia é corrigir os pontos que quebram primeiro no celular
+ * (paginação longa, textos sem quebra, menus do topbar) sem mexer no layout
+ * de desktop.
+ */
+
+.pagination {
+    flex-wrap: wrap;
+}
+
+h1, h2, h3, h4, h5, h6,
+.card-header,
+.app-footer {
+    overflow-wrap: break-word;
+}
+
+.app-sidebar .brand-text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.app-header .user-header p {
+    overflow-wrap: anywhere;
+}
+
+.form-control,
+.form-select {
+    max-width: 100%;
+}
+
+@media (max-width: 575.98px) {
+    .app-header .dropdown-menu {
+        max-width: calc(100vw - 1rem);
+    }
+}
+
+/*
+ * Tabelas em cards (`.table-stack`).
+ *
+ * Abaixo de 768px a tabela deixa de ser tabela e vira uma pilha de cartões:
+ * um por linha, com o cabeçalho da coluna virando rótulo de cada valor. Os
+ * rótulos vêm do `thead` e são aplicados em JS (`admin.js`), então colunas
+ * condicionais (ex.: agenda sem a coluna Barbeiro) continuam pareadas com o
+ * título certo.
+ *
+ * Mantidas em tabela com rolagem horizontal: a matriz de permissões e os
+ * relatórios (`.table-scroll`), onde empilhar tornaria a leitura pior.
+ */
+@media (max-width: 767.98px) {
+    .table-stack {
+        display: block;
+    }
+
+    .table-stack > thead {
+        display: none;
+    }
+
+    .table-stack > tbody,
+    .table-stack > tfoot {
+        display: block;
+    }
+
+    .table-stack > tbody > tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        padding: 0.35rem 1rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.85rem;
+        background: var(--bs-body-bg);
+    }
+
+    .table-stack > tbody > tr.is-stack-group {
+        margin: 1.1rem 0 0.5rem;
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+
+    .table-stack > tbody > tr.is-stack-group > th {
+        display: block;
+        padding: 0.55rem 0.85rem;
+        border-radius: 0.7rem;
+        background: var(--bs-secondary-bg);
+        text-align: left !important;
+    }
+
+    .table-stack > tbody > tr > td[data-label] {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid var(--bs-border-color);
+        white-space: normal !important;
+        text-align: left !important;
+        overflow-wrap: anywhere;
+    }
+
+    .table-stack > tbody > tr > td[data-label]::before {
+        content: attr(data-label);
+        color: var(--bs-secondary-color);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .table-stack > tbody > tr > td[data-label]:last-child {
+        padding-bottom: 0.35rem;
+        border-bottom: 0;
+    }
+
+    .table-stack > tbody > tr > td[data-label] form {
+        display: block;
+        width: 100%;
+    }
+
+    .table-stack > tbody > tr > td[data-label] .btn {
+        width: 100%;
+        margin-top: 0.35rem;
+    }
+
+    .table-stack > tbody > tr > td[colspan] {
+        display: block;
+        padding: 1rem 0;
+    }
+
+    .table-stack > tfoot > tr {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.35rem 1rem;
+        margin-top: 0.5rem;
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.85rem;
+        background: var(--bs-light-bg);
+    }
+
+    .table-stack > tfoot > tr:first-child {
+        margin-top: 0.75rem;
+    }
+
+    .table-stack > tfoot > tr > * {
+        display: block;
+        padding: 0;
+        border: 0;
+        text-align: left !important;
+    }
+
+    .table-stack > tfoot > tr > *:empty {
+        display: none;
+    }
+}

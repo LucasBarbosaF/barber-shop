@@ -165,7 +165,7 @@
                                href="{{ route('app.agenda.index', ['date' => $today->toDateString()]) }}">Ver todos</a>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0 table-stack">
                                 <thead class="table-light">
                                     <tr>
                                         <th scope="col">Horário</th>

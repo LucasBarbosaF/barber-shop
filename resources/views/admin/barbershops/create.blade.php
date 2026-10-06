@@ -80,7 +80,7 @@
                     </div>
                 </fieldset>
 
-                <div class="border-top pt-4 mt-4 d-flex align-items-center gap-3">
+                <div class="border-top pt-4 mt-4 d-flex flex-wrap align-items-center gap-3">
                     <button type="submit" class="btn btn-primary">Cadastrar barbearia</button>
                     <a href="{{ route('admin.barbershops.index') }}" class="btn btn-link text-secondary">Cancelar</a>
                 </div>

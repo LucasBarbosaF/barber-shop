@@ -23,13 +23,13 @@
         </div>
     @endif
 
-    <div class="d-flex justify-content-between align-items-end mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <div>
             <h1 class="h3 mb-0">Equipe</h1>
             <p class="text-secondary mb-0">Pessoas com acesso a esta barbearia</p>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             @can('users.manage')
                 <a href="{{ route('app.team.create') }}" class="btn btn-primary">
                     <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
@@ -44,7 +44,7 @@
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-stack">
                 <thead class="table-light">
                     <tr>
                         <th scope="col">Nome</th>

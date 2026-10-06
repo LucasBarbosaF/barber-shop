@@ -323,3 +323,30 @@
         transition: none;
     }
 }
+
+/*
+ * Demais telas convidadas (recuperar senha, 2FA, e-mail, erros 401/403) são
+ * cards soltos no `body.login-page`. O AdminLTE já centraliza na vertical;
+ * aqui entram largura máxima, centralização horizontal e um respiro nas
+ * laterais — sem isso o card ocupa a tela inteira no desktop e encosta nas
+ * bordas no celular.
+ */
+.login-page {
+    background: #f3f5f9;
+}
+
+.login-page > div:not(.auth-login-shell) {
+    width: min(100%, 26rem);
+    margin: 1.5rem auto;
+}
+
+@media (max-width: 575.98px) {
+    .login-page {
+        justify-content: flex-start;
+    }
+
+    .login-page > div:not(.auth-login-shell) {
+        width: calc(100% - 2rem);
+        margin: 1rem auto;
+    }
+}

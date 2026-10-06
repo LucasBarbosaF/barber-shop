@@ -1,5 +1,5 @@
 <x-app-layout :title="$membership->user?->name">
-    <div class="d-flex justify-content-between align-items-end mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <div>
             <h1 class="h3 mb-0">{{ $membership->user?->name }}</h1>
             <p class="text-secondary mb-0">Membro desta equipe</p>
