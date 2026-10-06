@@ -26,15 +26,22 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
+# Primeiro copia apenas os arquivos do Composer
 COPY composer.json composer.lock ./
 
+# Instala dependências sem executar scripts do Laravel
 RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
 
+# Agora copia todo o Laravel, incluindo o artisan
 COPY . .
+
+# Executa os scripts do Laravel depois que artisan existe
+RUN php artisan package:discover --ansi
 
 RUN chown -R www-data:www-data \
     /var/www/storage \
@@ -45,7 +52,9 @@ RUN chmod -R 775 \
     /var/www/bootstrap/cache
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 COPY docker/start.sh /start.sh
 
 RUN chmod +x /start.sh
