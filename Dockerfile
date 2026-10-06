@@ -1,7 +1,8 @@
 FROM php:8.4-fpm
 
-# Dependências do sistema
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
     git \
     curl \
     unzip \
@@ -27,22 +28,28 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copia projeto
 COPY . .
 
-# Instala dependências PHP
 RUN composer install \
+    --no-dev \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
 
-# Permissões Laravel
-RUN chown -R www-data:www-data /var/www/storage \
+RUN chown -R www-data:www-data \
+    /var/www/storage \
     /var/www/bootstrap/cache
 
-RUN chmod -R 775 /var/www/storage \
+RUN chmod -R 775 \
+    /var/www/storage \
     /var/www/bootstrap/cache
 
-EXPOSE 9000
+# Nginx
+COPY docker/nginx/default.conf /etc/nginx/sites-available/default
 
-CMD ["php-fpm"]
+# Supervisor
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+EXPOSE 10000
+
+CMD ["/usr/bin/supervisord", "-n"]
