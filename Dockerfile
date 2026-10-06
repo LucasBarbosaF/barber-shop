@@ -1,17 +1,14 @@
 # ============================================
-# Frontend - Vite
+# Frontend / Node
 # ============================================
-FROM node:22 AS frontend
+FROM node:22 AS node
 
 WORKDIR /var/www
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
-
-RUN npm run dev
 
 
 # ============================================
@@ -41,12 +38,10 @@ RUN apt-get update && apt-get install -y \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Composer
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -59,13 +54,15 @@ RUN composer install \
 # Código Laravel
 COPY . .
 
-# Build do Vite
-COPY --from=frontend /var/www/public/build ./public/build
+# Copia Node + npm do estágio anterior
+COPY --from=node /usr/local /usr/local
+
+# Copia node_modules
+COPY --from=node /var/www/node_modules ./node_modules
 
 # Laravel
 RUN php artisan package:discover --ansi
 
-# Permissões
 RUN chown -R www-data:www-data \
     /var/www/storage \
     /var/www/bootstrap/cache
@@ -74,13 +71,10 @@ RUN chmod -R 775 \
     /var/www/storage \
     /var/www/bootstrap/cache
 
-# Nginx
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Start
 COPY docker/start.sh /start.sh
 
 RUN chmod +x /start.sh
