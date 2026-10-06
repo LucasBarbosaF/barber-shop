@@ -13,6 +13,7 @@
 Makefile
 /docs
 *.sh
+!/docker/start.sh
 # Laravel generated files
 /bootstrap/cache/*
 !/bootstrap/cache/.gitignore
