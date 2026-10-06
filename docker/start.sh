@@ -12,6 +12,7 @@ sed -i "s/listen 10000;/listen ${PORT};/" \
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan storage:link
 
 # Inicia PHP-FPM + Nginx
 exec /usr/bin/supervisord -n
