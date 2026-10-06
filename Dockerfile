@@ -4,8 +4,8 @@ RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
     git \
-    curl \
     unzip \
+    curl \
     libpq-dev \
     libzip-dev \
     libicu-dev \
@@ -20,21 +20,21 @@ RUN apt-get update && apt-get install -y \
         bcmath \
         intl \
         zip \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-COPY . .
+COPY composer.json composer.lock ./
 
 RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
+
+COPY . .
 
 RUN chown -R www-data:www-data \
     /var/www/storage \
@@ -44,12 +44,12 @@ RUN chmod -R 775 \
     /var/www/storage \
     /var/www/bootstrap/cache
 
-# Nginx
-COPY docker/nginx/default.conf /etc/nginx/sites-available/default
-
-# Supervisor
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/start.sh /start.sh
+
+RUN chmod +x /start.sh
 
 EXPOSE 10000
 
-CMD ["/usr/bin/supervisord", "-n"]
+CMD ["/start.sh"]
