@@ -1,0 +1,69 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+/auth.json
+*.key
+
+# Dependencies
+/vendor/
+/node_modules/
+
+Makefile
+/docs
+*.sh
+# Laravel generated files
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+/storage/app/public/*
+!/storage/app/public/.gitignore
+/storage/app/private/*
+!/storage/app/private/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/pail
+
+# Local databases and test artifacts
+/database/*.sqlite
+/database/*.sqlite-*
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+/build/
+/Homestead.json
+/Homestead.yaml
+
+# Frontend build output and local Vite server
+/public/build/
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# IDEs and local tooling
+/.codex/
+/.cursor/
+/.idea/
+/.nova/
+/.vscode/
+/.zed/
+/.phpactor.json
+/_ide_helper.php
+
+# OS files and logs
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

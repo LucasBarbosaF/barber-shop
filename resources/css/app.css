@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+
+/*
+ * Bootstrap 5 usage is PONTUAL only.
+ * Tailwind is the default visual system for the ERP and public site.
+ * Do not use Bootstrap to solve the same responsibility as Tailwind.
+ */

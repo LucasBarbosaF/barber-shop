@@ -1,0 +1,57 @@
+/*
+ * Painel administrativo — AdminLTE 4 sobre Bootstrap 5.
+ *
+ * Ordem importa:
+ * 1. AdminLTE traz o Bootstrap compilado dentro, então Bootstrap não é
+ *    importado à parte — dois reboot brigando pelo mesmo seletor é como o
+ *    painel vira um meio-termo dos dois.
+ * 2. Tailwind entra SEM o preflight (theme + utilities): o painel usa as
+ *    utilities para layout nos conteúdos das páginas, mas o reset base é do
+ *    Bootstrap. Preflight aqui apagaria margens/padding dos componentes
+ *    AdminLTE.
+ */
+@import 'admin-lte/dist/css/adminlte.min.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/utilities.css';
+
+.agenda-extra-filters-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    color: #2457c5;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    list-style: none;
+}
+
+.agenda-extra-filters-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.agenda-extra-filters-toggle::marker {
+    content: '';
+}
+
+.agenda-extra-filters-toggle:focus-visible {
+    outline: 2px solid #2457c5;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.agenda-extra-filters-chevron {
+    color: #68758b;
+    transition: transform 150ms ease;
+}
+
+.agenda-extra-filters[open] .agenda-extra-filters-chevron {
+    transform: rotate(180deg);
+}
+
+.agenda-extra-filters-content {
+    padding: 0.85rem 0 0.25rem;
+    border-top: 1px solid #e9edf2;
+}

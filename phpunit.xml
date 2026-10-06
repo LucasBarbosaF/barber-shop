@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Architecture">
+            <directory>tests/Architecture</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <!--
+            PostgreSQL desde a Sprint 5. Antes era `sqlite :memory:`, e a escolha
+            fazia sentido: era mais rápido e não exigia serviço nenhum.
+
+            O RLS encerrou isso. `ALTER TABLE ... FORCE ROW LEVEL SECURITY` não é
+            sintaxe de SQLite, então a própria migration não roda lá; e
+            `set_config()`, que é como o tenant chega à policy, não existe. A
+            suíte passava a medir o driver errado — green por não exercitar nada.
+
+            Host, porta, usuário e senha NÃO ficam aqui de propósito: eles são do
+            ambiente, e o papel do usuário importa mais que a senha. Um papel
+            SUPERUSER ou BYPASSRLS não participa do isolamento, e a suíte passa a
+            verde sem provar nada. `./pest-pgsql.sh` monta o papel certo; o teste
+            `RowLevelSecurityTest > a suite nao roda vazia` falha alto e claro
+            quando alguém conecta com um papel que ignora RLS.
+
+            O NOME do banco é a exceção, e é o que impede um acidente: sem ele
+            aqui, um `./vendor/bin/pest` solto lê `DB_DATABASE` do `.env` — que é
+            `barber_saas`, o banco de desenvolvimento — e `RefreshDatabase` roda
+            `migrate:fresh` em cima dele. A suíte de teste apaga o banco de quem
+            está trabalhando. Nome de banco não é segredo, e um banco de teste
+            inexistente falha logo, que é o desfecho certo.
+
+            O PHPUnit só aplica `<env>` quando a variável não está no ambiente, e
+            `pest-pgsql.sh` a exporta antes de chamar o Pest: lá o valor do script
+            manda, aqui o padrão seguro manda.
+        -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_DATABASE" value="barber_saas_test"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="database"/>
+    </php>
+</phpunit>
