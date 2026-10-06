@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        URL::forceScheme('https');
         // O painel é AdminLTE/Bootstrap; a paginação padrão do Laravel renderiza
         // classes Tailwind e sairia fora do card em que os links são exibidos.
         Paginator::useBootstrapFive();
