@@ -78,6 +78,8 @@ Route::middleware(['auth', 'password.set'])->group(function (): void {
         });
 
         Route::middleware(['tenant.selected', 'permission:schedule.manage'])->group(function (): void {
+            Route::patch('/app/agendamentos/{appointment}/status', [AgendaController::class, 'updateStatus'])
+                ->name('app.agenda.appointments.status');
             Route::post('/app/agenda/indisponibilidades', [AgendaController::class, 'block'])
                 ->name('app.agenda.blocked-periods.store');
             Route::delete('/app/agenda/indisponibilidades/{blockedPeriod}', [AgendaController::class, 'unblock'])

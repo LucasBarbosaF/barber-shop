@@ -8,7 +8,8 @@
     @if (filled($currentBarbershop?->logo_path))
         <link rel="icon" href="{{ asset('storage/'.$currentBarbershop->logo_path) }}">
     @endif
-    @vite(['resources/css/admin.css', 'resources/js/admin.js'])
+    {{-- $assets: entradas extras por página (ex.: agenda.css/js), sempre após o CSS/JS base do painel. --}}
+    @vite(array_merge(['resources/css/admin.css', 'resources/js/admin.js'], $assets ?? []))
 </head>
 {{--
     `sidebar-mini` + `sidebar-collapse` (alternado pelo pushmenu) é o que deixa a

@@ -1,4 +1,4 @@
-<x-app-layout title="Agenda">
+<x-app-layout title="Agenda" :assets="['resources/css/agenda.css', 'resources/js/agenda.js']">
     @php
         $today = now(config('app.timezone'))->startOfDay();
         $rangeLabel = $date === $endDate
@@ -8,16 +8,41 @@
         $selectedService = request('service_id');
         $selectedStatus = request('status');
         $searchTerm = trim((string) request('search', ''));
-        $shortcutFilters = array_filter([
-            'barber_id' => $selectedBarber,
-            'service_id' => $selectedService,
-            'status' => $selectedStatus,
-            'search' => $searchTerm,
-        ], fn ($value) => filled($value));
         $activeFilterCount = collect([$selectedBarber, $selectedService, $selectedStatus, $searchTerm])
             ->filter(fn ($value) => filled($value))
             ->count();
         $additionalFiltersOpen = $activeFilterCount > 0;
+        $isTodayShortcut = $view === 'list'
+            ? $date === $today->toDateString() && $endDate === $today->toDateString()
+            : $anchorDate === $today->toDateString();
+        $weekStart = $today->copy()->startOfWeek();
+        $isWeekShortcut = $view === 'week'
+            || ($date === $weekStart->toDateString() && $endDate === $weekStart->copy()->endOfWeek()->toDateString());
+
+        $visibleDays = [];
+        if ($view !== 'list') {
+            $cursor = \Illuminate\Support\Carbon::parse($date);
+            $lastDay = \Illuminate\Support\Carbon::parse($endDate);
+            while ($cursor->lte($lastDay)) {
+                $visibleDays[] = [
+                    'date' => $cursor->toDateString(),
+                    'day' => $cursor->day,
+                    'weekday' => $weekdaysShort[($cursor->dayOfWeek + 6) % 7],
+                    'isToday' => $cursor->isToday(),
+                    'isWeekend' => $cursor->isSaturday() || $cursor->isSunday(),
+                    'label' => $cursor->copy()->locale('pt_BR')->translatedFormat('l, d \d\e F'),
+                ];
+                $cursor->addDay();
+            }
+        }
+
+        $anchorCarbon = \Illuminate\Support\Carbon::parse($anchorDate);
+        $miniStart = $anchorCarbon->copy()->startOfMonth()->startOfWeek();
+        $miniEnd = $anchorCarbon->copy()->endOfMonth()->endOfWeek();
+        $currentViewQuery = $view === 'list'
+            ? ['view' => 'list', 'start_date' => $date, 'end_date' => $endDate]
+            : ['view' => $view, 'date' => $anchorDate];
+        $withoutBarber = array_filter($filterQuery, fn ($key) => $key !== 'barber_id', ARRAY_FILTER_USE_KEY);
     @endphp
 
     <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
@@ -31,6 +56,8 @@
             Abrir página pública de agendamento
         </a>
     </div>
+
+    @include('app.agenda._toolbar')
 
     <div class="card mb-3">
         <div class="card-body">
@@ -88,30 +115,19 @@
 
             <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                 <span class="small text-secondary me-1">Ver:</span>
-                <a href="{{ route('app.agenda.index', array_filter([
-                    'start_date' => $today->toDateString(),
-                    'end_date' => $today->toDateString(),
-                    ...$shortcutFilters,
-                ])) }}" class="btn btn-sm {{ $date === $today->toDateString() && $endDate === $today->toDateString() ? 'btn-primary' : 'btn-outline-secondary' }}">
+                <a href="{{ $nav['today'] }}"
+                   class="btn btn-sm {{ $isTodayShortcut ? 'btn-primary' : 'btn-outline-secondary' }}">
                     Hoje
                 </a>
-                <a href="{{ route('app.agenda.index', array_filter([
-                    'start_date' => $today->toDateString(),
-                    'end_date' => $today->copy()->addDays(6)->toDateString(),
-                    ...$shortcutFilters,
-                ])) }}" class="btn btn-sm btn-outline-secondary">
+                <a href="{{ $nav['next7'] }}" class="btn btn-sm btn-outline-secondary">
                     Próximos 7 dias
                 </a>
-                <a href="{{ route('app.agenda.index', array_filter([
-                    'start_date' => $today->copy()->startOfWeek()->toDateString(),
-                    'end_date' => $today->copy()->endOfWeek()->toDateString(),
-                    ...$shortcutFilters,
-                ])) }}" class="btn btn-sm btn-outline-secondary">
+                <a href="{{ $nav['week'] }}"
+                   class="btn btn-sm {{ $isWeekShortcut ? 'btn-primary' : 'btn-outline-secondary' }}">
                     Esta semana
                 </a>
                 @if ($activeFilterCount > 0)
-                    <a href="{{ route('app.agenda.index', ['start_date' => $date, 'end_date' => $endDate]) }}"
-                       class="small ms-sm-auto">Limpar filtros</a>
+                    <a href="{{ $nav['clearFilters'] }}" class="small ms-sm-auto">Limpar filtros</a>
                 @endif
             </div>
 
@@ -181,119 +197,120 @@
         </div>
     </div>
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 px-1">
-        <div>
-            <h2 class="h5 mb-0">Agendamentos</h2>
-            <span class="small text-secondary">{{ $rangeLabel }} · {{ $appointments->count() }}
-                {{ $appointments->count() === 1 ? 'resultado' : 'resultados' }}</span>
-        </div>
-        @if ($selectedBarber)
-            <span class="small text-secondary">
-                <i class="fas fa-user-tie me-1" aria-hidden="true"></i>
-                {{ $barbers->firstWhere('id', (int) $selectedBarber)?->name ?? 'Barbeiro selecionado' }}
-            </span>
-        @endif
-    </div>
+    @if ($view === 'list')
+        @include('app.agenda._list')
+    @else
+        <div class="card agenda-calendar mb-4"
+             data-agenda-calendar
+             data-view="{{ $view }}"
+             data-date="{{ $anchorDate }}"
+             data-start="{{ $date }}"
+             data-end="{{ $endDate }}"
+             data-today="{{ $today->toDateString() }}"
+             data-now="{{ now(config('app.timezone'))->format('Y-m-d\TH:i:s') }}"
+             data-day-url="{{ $dayUrlTemplate }}">
+            <div class="agenda-calendar-body">
+                <aside class="agenda-sidebar" aria-label="Mini calendário e legenda">
+                    <div class="agenda-mini">
+                        <div class="agenda-mini-title">
+                            {{ $anchorCarbon->copy()->locale('pt_BR')->translatedFormat('F \d\e Y') }}
+                        </div>
+                        <div class="agenda-mini-head" aria-hidden="true">
+                            @foreach ($weekdaysShort as $weekday)
+                                <span>{{ mb_strtolower($weekday) }}</span>
+                            @endforeach
+                        </div>
+                        <div class="agenda-mini-grid">
+                            @for ($miniDay = $miniStart->copy(); $miniDay->lte($miniEnd); $miniDay->addDay())
+                                <a href="{{ route('app.agenda.index', [...$filterQuery, 'view' => 'day', 'date' => $miniDay->toDateString()]) }}"
+                                   class="agenda-mini-day
+                                       @if (! $miniDay->isSameMonth($anchorCarbon)) is-out @endif
+                                       @if ($miniDay->isToday()) is-today @endif
+                                       @if ($miniDay->toDateString() === $anchorDate) is-selected @endif"
+                                   aria-label="{{ $miniDay->copy()->locale('pt_BR')->translatedFormat('l, d \d\e F') }}">
+                                    {{ $miniDay->day }}
+                                </a>
+                            @endfor
+                        </div>
+                    </div>
 
-    <div class="card mb-4">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 table-stack">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Horário</th>
-                        @if (! $isBarber)
-                            <th scope="col">Barbeiro</th>
-                        @endif
-                        <th scope="col">Cliente</th>
-                        <th scope="col">Serviço</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="text-end">Atendimento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($appointmentGroups as $appointmentDate => $dayAppointments)
-                        <tr class="table-light">
-                            <th colspan="{{ $isBarber ? 5 : 6 }}" scope="rowgroup" class="py-2">
-                                <i class="far fa-calendar me-1 text-primary" aria-hidden="true"></i>
-                                {{ \Illuminate\Support\Carbon::parse($appointmentDate)->translatedFormat('l, d/m/Y') }}
-                                <span class="badge text-bg-secondary ms-1">
-                                    {{ $dayAppointments->count() }} {{ $dayAppointments->count() === 1 ? 'agendamento' : 'agendamentos' }}
-                                </span>
-                            </th>
-                        </tr>
-                        @foreach ($dayAppointments as $appointment)
-                            <tr>
-                                <td class="fw-semibold">
-                                    {{ $appointment->starts_at->setTimezone(config('app.timezone'))->format('H:i') }}–{{ $appointment->ends_at->setTimezone(config('app.timezone'))->format('H:i') }}
-                                </td>
-                                @if (! $isBarber)
-                                    <td>{{ $appointment->barber->name }}</td>
-                                @endif
-                                <td>
-                                    <div>{{ $appointment->customer->name }}</div>
-                                    <small class="text-secondary">{{ $appointment->customer->phone }}</small>
-                                </td>
-                                <td>{{ $appointment->service->name }}</td>
-                                <td>
-                                    @php
-                                        $statusLabels = [
-                                            'pending' => 'Pendente',
-                                            'confirmed' => 'Confirmado',
-                                            'arrived' => 'Cliente chegou',
-                                            'in_service' => 'Em atendimento',
-                                            'completed' => 'Concluído',
-                                            'canceled' => 'Cancelado',
-                                            'no_show' => 'Não compareceu',
-                                        ];
-                                        $statusValue = $appointment->status->value;
-                                    @endphp
-                                    <span class="badge {{ in_array($statusValue, ['confirmed', 'arrived', 'in_service'], true) ? 'text-bg-primary' : 'text-bg-secondary' }}">
-                                        {{ $statusLabels[$statusValue] }}
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    @if ($appointment->attendance !== null)
-                                        @can('attendance.view')
-                                            <a href="{{ route('app.attendances.show', $appointment->attendance) }}"
-                                               class="btn btn-sm btn-outline-primary">
-                                                {{ $appointment->attendance->status->value === 'open' ? 'Abrir atendimento' : 'Ver atendimento' }}
-                                            </a>
-                                        @endcan
-                                    @elseif (in_array($statusValue, ['confirmed', 'arrived'], true))
-                                        @can('attendance.manage')
-                                            <form method="POST" action="{{ route('app.attendances.open', $appointment) }}" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-sm btn-primary" type="submit">Iniciar atendimento</button>
-                                            </form>
-                                        @endcan
-                                    @else
-                                        <span class="text-secondary">—</span>
-                                    @endif
-                                </td>
-                            </tr>
+                    <div class="agenda-legend">
+                        <div class="agenda-legend-title">Status</div>
+                        @foreach ($statusOptions as $statusValue => $statusLabel)
+                            <span class="agenda-legend-item">
+                                <span class="agenda-legend-dot" data-status="{{ $statusValue }}"></span>
+                                {{ $statusLabel }}
+                            </span>
                         @endforeach
-                    @empty
-                        <tr>
-                            <td colspan="{{ $isBarber ? 5 : 6 }}" class="text-center text-secondary py-5">
-                                <i class="fas fa-calendar-day fa-2x mb-3 d-block" aria-hidden="true"></i>
-                                Não há clientes agendados neste período.
-                                @if ($searchTerm !== '' || $selectedService || $selectedStatus || $selectedBarber)
-                                    <div class="mt-3">
-                                        <a href="{{ route('app.agenda.index', [
-                                            'start_date' => $date,
-                                            'end_date' => $endDate,
-                                        ]) }}" class="btn btn-sm btn-outline-primary">
-                                            Limpar filtros adicionais
-                                        </a>
-                                    </div>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                        <span class="agenda-legend-item">
+                            <span class="agenda-legend-dot" data-status="blocked"></span>
+                            Indisponível
+                        </span>
+                    </div>
+
+                    @if (! $isBarber && $barbers->isNotEmpty())
+                        <div class="agenda-legend">
+                            <div class="agenda-legend-title">Barbeiros</div>
+                            <a href="{{ route('app.agenda.index', [...$withoutBarber, ...$currentViewQuery]) }}"
+                               class="agenda-barber-item @if (! isset($filterQuery['barber_id'])) is-active @endif">
+                                Todos
+                            </a>
+                            @foreach ($barbers as $barber)
+                                <a href="{{ route('app.agenda.index', [...$withoutBarber, ...$currentViewQuery, 'barber_id' => $barber->id]) }}"
+                                   class="agenda-barber-item @if ((string) ($filterQuery['barber_id'] ?? '') === (string) $barber->id) is-active @endif">
+                                    {{ $barber->name }}
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </aside>
+
+                <div class="agenda-main">
+                    @if ($view === 'month')
+                        <div class="agenda-weekhead" aria-hidden="true">
+                            @foreach ($weekdaysShort as $weekday)
+                                <span class="agenda-weekhead-cell">{{ $weekday }}</span>
+                            @endforeach
+                        </div>
+                        <div class="agenda-month" role="group" aria-label="Calendário mensal">
+                            <div class="agenda-month-body" data-agenda-month-body></div>
+                        </div>
+                    @else
+                        <div class="agenda-timegrid" data-agenda-timegrid
+                             style="--agenda-cols: {{ count($visibleDays) }};">
+                            <div class="agenda-tg-corner agenda-tg-head" aria-hidden="true"></div>
+                            @foreach ($visibleDays as $visibleDay)
+                                <div class="agenda-tg-head agenda-daycol-head @if ($visibleDay['isToday']) is-today @endif @if ($visibleDay['isWeekend']) is-weekend @endif">
+                                    <span class="agenda-daycol-wd">{{ $visibleDay['weekday'] }}</span>
+                                    <span class="agenda-daycol-num">{{ $visibleDay['day'] }}</span>
+                                </div>
+                            @endforeach
+                            <div class="agenda-tg-gutter" aria-hidden="true">
+                                @for ($hour = 0; $hour < 24; $hour++)
+                                    <span class="agenda-tg-hour">{{ sprintf('%02d:00', $hour) }}</span>
+                                @endfor
+                            </div>
+                            @foreach ($visibleDays as $visibleDay)
+                                <div class="agenda-daycol @if ($visibleDay['isToday']) is-today @endif @if ($visibleDay['isWeekend']) is-weekend @endif"
+                                     data-day="{{ $visibleDay['date'] }}"
+                                     aria-label="{{ $visibleDay['label'] }}"></div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <p class="agenda-empty" data-agenda-empty hidden>
+                        Nenhum agendamento neste período.
+                    </p>
+                </div>
+            </div>
+
+            <script type="application/json" data-agenda-events>@json($events, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG)</script>
+
+            <noscript>
+                @include('app.agenda._list')
+            </noscript>
         </div>
-    </div>
+    @endif
 
     @if ($isBarber && $ownBarber === null)
         <div class="alert alert-warning" role="status">
