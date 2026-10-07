@@ -13,7 +13,19 @@
 @import 'admin-lte/dist/css/adminlte.min.css';
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 @import 'tailwindcss/theme.css';
-@import 'tailwindcss/utilities.css';
+
+/*
+ * Utilities do Tailwind dentro de `@layer utilities` (e não soltas, como o
+ * `@import 'tailwindcss/utilities.css'` faz). Razão: o AdminLTE/Bootstrap está
+ * fora de camada; regras não-layeradas vencem regras de camada na cascade. Com
+ * as utilities soltas, Tailwind e Bootstrap brigavam pelo mesmo seletor
+ * (`.w-100`, `.p-3`, ...) e o build do Vite descartava a regra !important do
+ * Bootstrap em favor do valor calc() do Tailwind — o painel funcionava em dev e
+ * quebrava em produção. Dentro da camada, o Bootstrap sempre vence.
+ */
+@layer utilities {
+    @tailwind utilities;
+}
 
 .agenda-extra-filters-toggle {
     display: flex;
