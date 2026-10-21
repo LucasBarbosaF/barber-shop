@@ -77,6 +77,14 @@
                                 </a>
                             </li>
                         @endcan
+                        @can('recurrence.view')
+                            <li class="nav-item">
+                                <a href="{{ route('app.recurrence.index') }}" class="nav-link @if (request()->routeIs('app.recurrence.*')) active @endif">
+                                    <i class="nav-icon fas fa-rotate" aria-hidden="true"></i>
+                                    <p>Recorrência</p>
+                                </a>
+                            </li>
+                        @endcan
                     </ul>
                 </li>
 

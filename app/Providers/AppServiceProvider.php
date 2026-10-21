@@ -3,23 +3,29 @@
 namespace App\Providers;
 
 use App\Application\Barbers\Contracts\BarberRepository;
+use App\Application\Contracts\WhatsAppGateway;
 use App\Application\Customers\Contracts\CustomerRepository;
+use App\Application\Recurrence\Contracts\RecurrencePlanRepository;
+use App\Application\Recurrence\Contracts\RecurrenceSubscriptionRepository;
 use App\Application\Services\Contracts\ServiceRepository;
 use App\Application\Shared\Tenancy\TenantContext;
 use App\Domain\Tenant\Models\Tenant;
 use App\Http\Responses\LoginResponse;
 use App\Infrastructure\Barbers\Persistence\EloquentBarberRepository;
 use App\Infrastructure\Customers\Persistence\EloquentCustomerRepository;
+use App\Infrastructure\Recurrence\Persistence\EloquentRecurrencePlanRepository;
+use App\Infrastructure\Recurrence\Persistence\EloquentSubscriptionRepository;
 use App\Infrastructure\Services\Persistence\EloquentServiceRepository;
 use App\Infrastructure\Shared\Tenancy\SessionTenantContext;
+use App\Infrastructure\WhatsApp\MetaCloudApiGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BarberRepository::class, EloquentBarberRepository::class);
         $this->app->bind(CustomerRepository::class, EloquentCustomerRepository::class);
         $this->app->bind(ServiceRepository::class, EloquentServiceRepository::class);
+        $this->app->bind(RecurrencePlanRepository::class, EloquentRecurrencePlanRepository::class);
+        $this->app->bind(RecurrenceSubscriptionRepository::class, EloquentSubscriptionRepository::class);
+        $this->app->bind(WhatsAppGateway::class, MetaCloudApiGateway::class);
 
         // Usuários com senha provisória vão direto para a troca obrigatória.
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
@@ -42,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(env('APP_ENV', 'local') === 'production'
+        if (env('APP_ENV', 'local') === 'production'
         || env('APP_ENV', 'local') === 'develop') {
             URL::forceScheme('https');
         }

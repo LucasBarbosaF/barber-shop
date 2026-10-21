@@ -226,8 +226,13 @@ class AgendaController extends Controller
             'reason' => $attributes['reason'] ?? null,
         ]);
 
+        /*
+         * Volta para a URL de onde o formulário veio: é o único jeito de a
+         * agenda continuar com a visão, o período e os filtros que a pessoa
+         * tinha abertos antes de criar o bloqueio.
+         */
         return redirect()
-            ->route('app.agenda.index', ['date' => $period->starts_at->toDateString()])
+            ->back(fallback: route('app.agenda.index', ['date' => $period->starts_at->toDateString()]))
             ->with('status', 'Indisponibilidade adicionada à agenda.');
     }
 
@@ -239,7 +244,7 @@ class AgendaController extends Controller
         $blockedPeriod->delete();
 
         return redirect()
-            ->route('app.agenda.index', ['date' => $date])
+            ->back(fallback: route('app.agenda.index', ['date' => $date]))
             ->with('status', 'Indisponibilidade removida.');
     }
 
@@ -276,10 +281,11 @@ class AgendaController extends Controller
     }
 
     /**
-     * Visão pedida na URL, com dois fallbacks: sem parâmetro, um intervalo
-     * explícito (start/end) significa "quero a lista daquele período"; sem nenhum
-     * dos dois, a tela abre no dia — é a leitura padrão de quem chega para
-     * conferir a agenda de hoje.
+     * Visão pedida na URL, com três fallbacks: um intervalo explícito (start/end)
+     * significa "quero a lista daquele período"; uma data apontada sem visão
+     * (atalhos do dashboard, notificações, redirecionamentos) significa "quero
+     * aquele dia"; sem nada, a tela abre no mês — é a leitura padrão de quem
+     * chega pela barra lateral para conferir a agenda de um período inteiro.
      */
     private function resolveView(Request $request): string
     {
@@ -289,7 +295,11 @@ class AgendaController extends Controller
             return $requested;
         }
 
-        return ($request->filled('start_date') || $request->filled('end_date')) ? 'list' : 'day';
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            return 'list';
+        }
+
+        return $request->filled('date') ? 'day' : 'month';
     }
 
     /**

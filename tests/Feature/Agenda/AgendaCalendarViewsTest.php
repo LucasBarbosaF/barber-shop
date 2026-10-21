@@ -53,4 +53,46 @@ describe('visões de calendário da agenda', function () {
             ->assertSee('10:00–10:30')
             ->assertSee('Agendamentos');
     });
+
+    it('abre na visão de mês por padrão', function () {
+        [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
+
+        $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
+            ->actingAs($admin)
+            ->get(route('app.agenda.index'))
+            ->assertOk()
+            ->assertSee('data-view="month"', escape: false)
+            ->assertSee('data-agenda-month-body');
+    });
+
+    it('continua abrindo no dia quando a URL aponta uma data sem visão', function () {
+        [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
+        $date = CarbonImmutable::now(config('app.timezone'))->startOfDay()->addDays(3);
+
+        $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
+            ->actingAs($admin)
+            ->get(route('app.agenda.index', ['date' => $date->toDateString()]))
+            ->assertOk()
+            ->assertSee('data-view="day"', escape: false)
+            ->assertSee('data-agenda-timegrid');
+    });
+
+    it('mantém a visão atual e os filtros já aplicados ao enviar um novo filtro', function () {
+        [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
+        $date = CarbonImmutable::now(config('app.timezone'))->startOfMonth()->addDay();
+
+        $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
+            ->actingAs($admin)
+            ->get(route('app.agenda.index', [
+                'view' => 'month',
+                'date' => $date->toDateString(),
+                'status' => 'confirmed',
+                'search' => 'Mariana',
+            ]))
+            ->assertOk()
+            ->assertSee('name="view" value="month"', escape: false)
+            ->assertSee('name="date" value="'.$date->toDateString().'"', escape: false)
+            ->assertSee('name="status" value="confirmed"', escape: false)
+            ->assertSee('name="search" value="Mariana"', escape: false);
+    });
 });

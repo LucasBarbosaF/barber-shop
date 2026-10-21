@@ -10,6 +10,7 @@ use App\Http\Controllers\App\CommissionController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\PaymentController;
+use App\Http\Controllers\App\RecurrenceController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\App\TeamController;
 use App\Http\Controllers\App\TenantController;
 use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\PublicBookingController;
+use App\Http\Controllers\PublicRecurrenceController;
 use App\Http\Middleware\SetPublicBookingTenant;
 use App\Http\Middleware\SetTenantDatabaseContext;
 use App\Http\Middleware\SetUserDatabaseContext;
@@ -35,6 +37,25 @@ Route::middleware(['throttle:api', SetPublicBookingTenant::class])
         Route::get('/', [PublicBookingController::class, 'show'])->name('show');
         Route::get('/horarios', [PublicBookingController::class, 'availability'])->name('availability');
         Route::post('/', [PublicBookingController::class, 'store'])->name('store');
+
+        /*
+         | Recorrência no site: o cliente escolhe um plano ativo, marca o corte
+         | de abertura e recebe o link "minha recorrência" (uuid público, sem
+         | PII na URL) para acompanhar a cota e agendar os próximos cortes.
+         |
+         | Os ids entram como string e o controller resolve o model depois do
+         | `SetPublicBookingTenant`: route model binding roda antes do middleware
+         | e o RLS esconderia a linha (mesma razão de `PublicBookingController`).
+         */
+        Route::get('/planos', [PublicRecurrenceController::class, 'plans'])->name('plans');
+        Route::get('/planos/{planId}', [PublicRecurrenceController::class, 'show'])->name('plans.show');
+        Route::post('/planos/{planId}/assinar', [PublicRecurrenceController::class, 'subscribe'])->name('plans.subscribe');
+        Route::get('/recorrencia/{subscriptionPublicId}', [PublicRecurrenceController::class, 'manage'])
+            ->name('subscription.manage');
+        Route::get('/recorrencia/{subscriptionPublicId}/horarios', [PublicRecurrenceController::class, 'availability'])
+            ->name('subscription.availability');
+        Route::post('/recorrencia/{subscriptionPublicId}/cortes', [PublicRecurrenceController::class, 'storeCut'])
+            ->name('subscription.cuts.store');
     });
 
 // Primeiro acesso: troca obrigatória da senha provisória.
@@ -275,6 +296,53 @@ Route::middleware(['auth', 'password.set'])->group(function (): void {
                 Route::delete('/{service}', [ServiceController::class, 'destroy'])
                     ->middleware('permission:services.delete')
                     ->name('destroy');
+            });
+
+        /*
+         | Recorrência: catálogo de planos (o que a barbearia vende) e
+         | assinaturas (o que o cliente tem). Ler exige `recurrence.view`;
+         | a mutação do catálogo é `recurrence.create/update/delete` e o ciclo
+         | de vida da assinatura (criar, ativar, agendar corte, cancelar) é
+         | `recurrence.manage` — a recepção opera sem poder alterar o catálogo.
+         */
+        Route::middleware('tenant.selected')
+            ->prefix('app/recorrencia')
+            ->name('app.recurrence.')
+            ->group(function (): void {
+                Route::middleware('permission:recurrence.view')->group(function (): void {
+                    Route::get('/', [RecurrenceController::class, 'index'])->name('index');
+                    Route::get('/assinaturas/{subscription}', [RecurrenceController::class, 'showSubscription'])
+                        ->name('subscriptions.show');
+                });
+
+                Route::middleware('permission:recurrence.create')->group(function (): void {
+                    Route::get('/novo', [RecurrenceController::class, 'create'])->name('create');
+                    Route::post('/', [RecurrenceController::class, 'store'])->name('store');
+                });
+
+                Route::middleware('permission:recurrence.update')->group(function (): void {
+                    Route::get('/{plan}/editar', [RecurrenceController::class, 'edit'])->name('edit');
+                    Route::put('/{plan}', [RecurrenceController::class, 'update'])->name('update');
+                });
+
+                Route::middleware('permission:recurrence.delete')->group(function (): void {
+                    Route::delete('/{plan}', [RecurrenceController::class, 'destroy'])->name('destroy');
+                });
+
+                Route::middleware('permission:recurrence.manage')->group(function (): void {
+                    Route::post('/assinaturas', [RecurrenceController::class, 'storeSubscription'])
+                        ->name('subscriptions.store');
+                    Route::post('/assinaturas/{subscription}/pagamento', [RecurrenceController::class, 'activate'])
+                        ->name('subscriptions.activate');
+                    Route::post('/assinaturas/{subscription}/caixa', [RecurrenceController::class, 'storeCash'])
+                        ->name('subscriptions.cash');
+                    Route::post('/assinaturas/{subscription}/pagamentos', [RecurrenceController::class, 'storePayment'])
+                        ->name('subscriptions.payments.store');
+                    Route::post('/assinaturas/{subscription}/cortes', [RecurrenceController::class, 'storeCut'])
+                        ->name('subscriptions.cuts.store');
+                    Route::post('/assinaturas/{subscription}/cancelar', [RecurrenceController::class, 'cancel'])
+                        ->name('subscriptions.cancel');
+                });
             });
     });
 

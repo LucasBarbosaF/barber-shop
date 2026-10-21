@@ -2,6 +2,7 @@
 
 use App\Domain\Agenda\Enums\AppointmentStatus;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Recurrence\Enums\SubscriptionStatus;
 use App\Domain\Tenant\Enums\MembershipRole;
 use App\Domain\Tenant\Models\Tenant;
 use App\Models\Appointment;
@@ -9,8 +10,11 @@ use App\Models\Attendance;
 use App\Models\AttendanceItem;
 use App\Models\Barber;
 use App\Models\Customer;
+use App\Models\RecurrencePlan;
+use App\Models\RecurrenceSubscription;
 use App\Models\Service;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
 
 function appointmentForAttendance(
     Tenant $tenant,
@@ -118,6 +122,69 @@ describe('atendimento', function () {
 
         actingInTenant($tenant);
         expect(AttendanceItem::query()->where('attendance_id', $attendanceId)->count())->toBe(2);
+    });
+
+    it('proporciona a comissão no corte do plano e usa o preço do serviço no adicional', function () {
+        [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
+        [$appointment, $barber, $customer, $service] = appointmentForAttendance($tenant, '37.50', '40.00');
+
+        actingInTenant($tenant);
+        $plan = RecurrencePlan::factory()->create([
+            'tenant_id' => $tenant->getKey(),
+            'service_id' => $service->getKey(),
+            'name' => 'Clube Comissão',
+            'duration_months' => 3,
+            'sessions_per_month' => 4,
+            'max_sessions_per_week' => 2,
+            'price' => '400.00',
+        ]);
+        $subscription = RecurrenceSubscription::query()->create([
+            'public_id' => Str::uuid(),
+            'customer_id' => $customer->getKey(),
+            'plan_id' => $plan->getKey(),
+            'barber_id' => $barber->getKey(),
+            'service_id' => $service->getKey(),
+            'plan_name' => $plan->name,
+            'price' => $plan->price,
+            'duration_months' => $plan->duration_months,
+            'sessions_per_month' => $plan->sessions_per_month,
+            'max_sessions_per_week' => $plan->max_sessions_per_week,
+            'starts_at' => now()->toDateString(),
+            'ends_at' => now()->addMonths($plan->duration_months)->toDateString(),
+            'status' => SubscriptionStatus::Active,
+            'paid_amount' => $plan->price,
+            'paid_at' => now(),
+        ]);
+        $appointment->update(['recurrence_subscription_id' => $subscription->getKey()]);
+
+        $addon = Service::factory()->create([
+            'tenant_id' => $tenant->getKey(),
+            'name' => 'Barba adicional',
+            'duration_minutes' => 20,
+            'price' => '80.00',
+        ]);
+        actingWithoutTenant();
+
+        $client = $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
+            ->actingAs($admin);
+        $attendanceId = $client->postJson(route('app.attendances.open', $appointment))
+            ->assertCreated()
+            ->json('data.id');
+
+        // Base do corte do plano: R$ 400 ÷ 4 cortes/mês = R$ 100; 37,5% = 37,50.
+        $client->getJson(route('app.attendances.show', $attendanceId))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.unit_price_snapshot', '100.00')
+            ->assertJsonPath('data.items.0.commission_percentage_snapshot', '37.50')
+            ->assertJsonPath('data.items.0.commission_amount_snapshot', '37.50');
+
+        // Adicional fora do plano continua com o próprio preço: 80 × 37,5% = 30,00.
+        $client->postJson(route('app.attendances.items.store', $attendanceId), [
+            'service_id' => $addon->getKey(),
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.unit_price_snapshot', '80.00')
+            ->assertJsonPath('data.commission_amount_snapshot', '30.00');
     });
 
     it('rejeita abrir atendimento sem percentual de comissão configurado', function () {

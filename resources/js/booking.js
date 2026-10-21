@@ -32,6 +32,8 @@ const bookingForm = document.querySelector('[data-booking-form]');
 
 if (bookingForm) {
     const service = bookingForm.querySelector('[data-booking-service]');
+    // Plano de recorrência: o serviço é o do plano e não aparece como campo.
+    const fixedServiceId = bookingForm.dataset.bookingFixedService || '';
     const barber = bookingForm.querySelector('[data-booking-barber]');
     const date = bookingForm.querySelector('[data-booking-date]');
     const slotsContainer = bookingForm.querySelector('[data-booking-slots]');
@@ -45,6 +47,8 @@ if (bookingForm) {
     const progressSteps = document.querySelectorAll('.booking-progress li');
     let availabilityRequest;
 
+    const currentServiceId = () => (service ? service.value : fixedServiceId);
+
     const showMessage = (message, isError = false) => {
         slotsContainer.replaceChildren();
         const element = document.createElement('span');
@@ -55,20 +59,30 @@ if (bookingForm) {
 
     const updateSummary = () => {
         const selectedBarber = barber.selectedOptions[0];
-        const selectedService = service.selectedOptions[0];
-        const hasService = Boolean(service.value);
+        const selectedService = service ? service.selectedOptions[0] : null;
+        const hasService = Boolean(currentServiceId());
 
-        summaryBarber.textContent = barber.value ? selectedBarber.textContent.trim() : 'Não selecionado';
-        summaryService.textContent = hasService
-            ? `${selectedService.dataset.name} · ${selectedService.dataset.duration} min`
-            : 'Não selecionado';
-        summaryDate.textContent = date.value
-            ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(`${date.value}T12:00:00`))
-            : 'Não selecionada';
-        summaryTime.textContent = timeInput.value || 'Aguardando seleção';
-        summaryPrice.textContent = hasService ? `R$ ${selectedService.dataset.price}` : '—';
+        if (summaryBarber) {
+            summaryBarber.textContent = barber.value ? selectedBarber.textContent.trim() : 'Não selecionado';
+        }
+        if (summaryService) {
+            summaryService.textContent = hasService && selectedService
+                ? `${selectedService.dataset.name} · ${selectedService.dataset.duration} min`
+                : (hasService ? summaryService.dataset.fixedLabel || 'Serviço do plano' : 'Não selecionado');
+        }
+        if (summaryDate) {
+            summaryDate.textContent = date.value
+                ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(`${date.value}T12:00:00`))
+                : 'Não selecionada';
+        }
+        if (summaryTime) {
+            summaryTime.textContent = timeInput.value || 'Aguardando seleção';
+        }
+        if (summaryPrice) {
+            summaryPrice.textContent = hasService && selectedService ? `R$ ${selectedService.dataset.price}` : '—';
+        }
 
-        const serviceReady = Boolean(barber.value && service.value);
+        const serviceReady = Boolean(barber.value && hasService);
         const timeReady = Boolean(serviceReady && date.value && timeInput.value);
         const completedSteps = [serviceReady, timeReady, false];
         const currentStep = completedSteps.findIndex((completed) => !completed);
@@ -85,6 +99,11 @@ if (bookingForm) {
     };
 
     const filterServices = () => {
+        if (!service) {
+            updateSummary();
+            return;
+        }
+
         const selectedBarber = barber.selectedOptions[0];
         const allowedServiceIds = new Set(
             (selectedBarber?.dataset.serviceIds ?? '')
@@ -120,8 +139,11 @@ if (bookingForm) {
         timeInput.value = '';
         updateSummary();
 
-        if (!service.value || !barber.value || !date.value) {
-            showMessage('Escolha profissional, serviço e data para ver os horários.');
+        const serviceId = currentServiceId();
+        if (!serviceId || !barber.value || !date.value) {
+            showMessage(service
+                ? 'Escolha profissional, serviço e data para ver os horários.'
+                : 'Escolha o profissional e a data para ver os horários.');
             return;
         }
 
@@ -130,7 +152,7 @@ if (bookingForm) {
         showMessage('Buscando horários disponíveis…');
 
         const query = new URLSearchParams({
-            service_id: service.value,
+            service_id: serviceId,
             barber_id: barber.value,
             date: date.value,
         });
@@ -145,10 +167,10 @@ if (bookingForm) {
                 throw new Error(`Falha ao consultar horários (${response.status}).`);
             }
 
-            const { data } = await response.json();
+            const { data, reason } = await response.json();
             slotsContainer.replaceChildren();
             if (data.length === 0) {
-                showMessage('Não há horários disponíveis nessa data. Experimente outro dia ou profissional.');
+                showMessage(reason || 'Não há horários disponíveis nessa data. Experimente outro dia ou profissional.');
                 return;
             }
 
@@ -185,7 +207,7 @@ if (bookingForm) {
         filterServices();
         loadSlots();
     });
-    [service, date].forEach((field) => field.addEventListener('change', loadSlots));
+    [service, date].filter(Boolean).forEach((field) => field.addEventListener('change', loadSlots));
 
     bookingForm.addEventListener('submit', (event) => {
         if (!timeInput.value) {
@@ -196,7 +218,9 @@ if (bookingForm) {
         }
 
         const phone = bookingForm.querySelector('[name="customer_phone"]');
-        phone.value = phone.value.replace(/\D/g, '');
+        if (phone) {
+            phone.value = phone.value.replace(/\D/g, '');
+        }
     });
 
     filterServices();

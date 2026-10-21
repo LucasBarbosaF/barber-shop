@@ -37,6 +37,14 @@ enum Permission: string
 
     case StockManage = 'stock.manage';
 
+    case RecurrenceView = 'recurrence.view';
+    case RecurrenceCreate = 'recurrence.create';
+    case RecurrenceUpdate = 'recurrence.update';
+    case RecurrenceDelete = 'recurrence.delete';
+
+    /** Ativar, cancelar e agendar cortes de uma assinatura — não cria o plano. */
+    case RecurrenceManage = 'recurrence.manage';
+
     case ScheduleView = 'schedule.view';
     case ScheduleManage = 'schedule.manage';
 
@@ -86,6 +94,11 @@ enum Permission: string
             self::ProductsUpdate => 'Editar produtos',
             self::ProductsDelete => 'Excluir produtos',
             self::StockManage => 'Movimentar estoque',
+            self::RecurrenceView => 'Ver planos e assinaturas de recorrência',
+            self::RecurrenceCreate => 'Cadastrar planos de recorrência',
+            self::RecurrenceUpdate => 'Editar planos de recorrência',
+            self::RecurrenceDelete => 'Excluir planos de recorrência',
+            self::RecurrenceManage => 'Ativar, cancelar e agendar cortes de recorrência',
             self::ScheduleView => 'Ver agenda',
             self::ScheduleManage => 'Criar, cancelar e remarcar agendamentos',
             self::AttendanceView => 'Ver atendimentos',

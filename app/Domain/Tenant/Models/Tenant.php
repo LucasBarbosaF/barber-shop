@@ -26,8 +26,9 @@ use Illuminate\Support\Str;
  * @property string|null $phone
  * @property string|null $logo_path
  * @property array<int, string>|null $payment_methods
+ * @property array<string, mixed>|null $whatsapp_settings
  */
-#[Fillable(['name', 'slug', 'document', 'email', 'phone', 'logo_path', 'payment_methods', 'is_active', 'trial_ends_at'])]
+#[Fillable(['name', 'slug', 'document', 'email', 'phone', 'logo_path', 'payment_methods', 'whatsapp_settings', 'is_active', 'trial_ends_at'])]
 class Tenant extends Model
 {
     /** @use HasFactory<TenantFactory> */
@@ -48,6 +49,7 @@ class Tenant extends Model
             'is_active' => 'boolean',
             'trial_ends_at' => 'datetime',
             'payment_methods' => 'array',
+            'whatsapp_settings' => 'array',
         ];
     }
 

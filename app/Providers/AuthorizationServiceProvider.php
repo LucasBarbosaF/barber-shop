@@ -8,11 +8,15 @@ use App\Domain\Authorization\Enums\Permission;
 use App\Domain\Tenant\Models\Membership;
 use App\Models\Barber;
 use App\Models\Customer;
+use App\Models\RecurrencePlan;
+use App\Models\RecurrenceSubscription;
 use App\Models\Service;
 use App\Models\User;
 use App\Policies\BarberPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\MembershipPolicy;
+use App\Policies\RecurrencePlanPolicy;
+use App\Policies\RecurrenceSubscriptionPolicy;
 use App\Policies\ServicePolicy;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -65,5 +69,7 @@ class AuthorizationServiceProvider extends ServiceProvider
         $gate->policy(Barber::class, BarberPolicy::class);
         $gate->policy(Customer::class, CustomerPolicy::class);
         $gate->policy(Service::class, ServicePolicy::class);
+        $gate->policy(RecurrencePlan::class, RecurrencePlanPolicy::class);
+        $gate->policy(RecurrenceSubscription::class, RecurrenceSubscriptionPolicy::class);
     }
 }

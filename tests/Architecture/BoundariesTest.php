@@ -92,6 +92,8 @@ it('freezes the classes that resolve a permission by hand', function (): void {
         'Policies/BarberPolicy.php',
         'Policies/CustomerPolicy.php',
         'Policies/MembershipPolicy.php',
+        'Policies/RecurrencePlanPolicy.php',
+        'Policies/RecurrenceSubscriptionPolicy.php',
         'Policies/ServicePolicy.php',
         'Providers/AuthorizationServiceProvider.php',
     ];
@@ -121,6 +123,12 @@ it('freezes the middleware that reads the tenant outside the resolver', function
      * `SetTenantDatabaseContext` entrou na lista na Sprint 5: ele lê o contexto
      * para escrever `app.current_tenant` no banco. Não decide nada — apenas
      * informa ao RLS a barbearia que o `ResolveTenant` já decidiu.
+     *
+     * `SetWhatsAppWebhookTenant` é o espelho público do `SetPublicBookingTenant`:
+     * o webhook do WhatsApp não tem sessão nem usuário, e o tenant sai do
+     * `phone_number_id` que o Meta coloca no payload. Ele seta os dois contextos
+     * (aplicação e banco) porque a máquina de estados lê e escreve dado
+     * tenant-scoped dentro da mesma requisição.
      */
     $allowed = [
         'Http/Middleware/EnsurePermission.php',
@@ -128,6 +136,7 @@ it('freezes the middleware that reads the tenant outside the resolver', function
         'Http/Middleware/ResolveTenant.php',
         'Http/Middleware/SetPublicBookingTenant.php',
         'Http/Middleware/SetTenantDatabaseContext.php',
+        'Http/Middleware/SetWhatsAppWebhookTenant.php',
     ];
 
     $found = [];
@@ -223,8 +232,12 @@ it('freezes the set of classes extending a persistence base class', function ():
         'Models/Payment.php',
         'Models/PaymentEvent.php',
         'Models/PaymentRefund.php',
+        'Models/RecurrencePlan.php',
+        'Models/RecurrenceSubscription.php',
+        'Models/RecurrenceSubscriptionPayment.php',
         'Models/Service.php',
         'Models/User.php',
+        'Models/WhatsAppConversation.php',
     ];
 
     $pattern = '/\bclass\s+\w+\s+extends\s+(Model|TenantScopedModel|Authenticatable|PersonalAccessToken)\b/';

@@ -14,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 final class CreatePublicAppointment extends Action
 {
-    public function __construct(private readonly ListAvailableSlots $listAvailableSlots) {}
+    public function __construct(
+        private readonly ListAvailableSlots $listAvailableSlots,
+        private readonly NotifyBarberOfAppointment $notifyBarber,
+    ) {}
 
     /**
      * @param  array{barber_id: int, service_id: int, date: string, time: string, customer_name: string, customer_phone: string}  $input
@@ -77,13 +80,9 @@ final class CreatePublicAppointment extends Action
             ]);
 
             if ($barber->user_id !== null) {
-                $now = now();
-                DB::table('appointment_notifications')->insert([
-                    'tenant_id' => $barber->tenant_id,
-                    'user_id' => $barber->user_id,
-                    'appointment_id' => $appointment->getKey(),
-                    'created_at' => $now,
-                    'updated_at' => $now,
+                $this->notifyBarber->execute([
+                    'appointment' => $appointment,
+                    'barber' => $barber,
                 ]);
             }
 

@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceItem;
 use App\Models\Barber;
 use App\Models\CommissionRule;
+use App\Models\RecurrenceSubscription;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -60,7 +61,24 @@ final class AddAttendanceItem extends Action
             $commissionPercentage = $rule->percentage ?? $barber->commission_percentage;
             $fixedAmount = $rule?->fixed_amount;
 
-            $priceCents = self::toMinorUnits($service->price);
+            /*
+             * Base da comissão: no corte avulso é o preço do serviço; no corte
+             * do plano é a parcela do plano (preço mensal ÷ cortes do mês) — o
+             * cliente pagou o pacote, não a cadeira. Um serviço adicional no
+             * mesmo atendimento (barba, por exemplo) continua usando o próprio
+             * preço, porque não faz parte da assinatura. A regra do barbeiro
+             * (% ou valor fixo) é aplicada sobre essa base.
+             */
+            $subscription = $appointment->recurrence_subscription_id !== null
+                ? RecurrenceSubscription::query()->find($appointment->recurrence_subscription_id)
+                : null;
+
+            $belongsToPlan = $subscription !== null
+                && (int) $subscription->service_id === (int) $service->getKey();
+
+            $priceCents = $belongsToPlan
+                ? (int) round(self::toMinorUnits($subscription->price) / max(1, $subscription->sessions_per_month))
+                : self::toMinorUnits($service->price);
             $quantity = $input['quantity'];
             if ($calculationType === CommissionCalculationType::Percentage) {
                 if ($commissionPercentage === null) {
@@ -87,7 +105,7 @@ final class AddAttendanceItem extends Action
                 'attendance_id' => $attendance->getKey(),
                 'service_id' => $service->getKey(),
                 'quantity' => $quantity,
-                'unit_price_snapshot' => $service->price,
+                'unit_price_snapshot' => self::fromMinorUnits($priceCents),
                 'commission_calculation_type_snapshot' => $calculationType,
                 'commission_percentage_snapshot' => $calculationType === CommissionCalculationType::Percentage
                     ? $commissionPercentage

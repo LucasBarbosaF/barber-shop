@@ -17,12 +17,21 @@ use Illuminate\Support\Carbon;
  * @property Carbon $starts_at
  * @property Carbon $ends_at
  * @property AppointmentStatus $status
+ * @property int|null $recurrence_subscription_id
  */
 class Appointment extends TenantScopedModel
 {
     protected $table = 'appointments';
 
-    protected $fillable = ['customer_id', 'barber_id', 'service_id', 'starts_at', 'ends_at', 'status'];
+    protected $fillable = [
+        'customer_id',
+        'barber_id',
+        'service_id',
+        'recurrence_subscription_id',
+        'starts_at',
+        'ends_at',
+        'status',
+    ];
 
     protected function casts(): array
     {
@@ -63,5 +72,13 @@ class Appointment extends TenantScopedModel
     public function attendance(): HasOne
     {
         return $this->hasOne(Attendance::class);
+    }
+
+    /**
+     * @return BelongsTo<RecurrenceSubscription, $this>
+     */
+    public function recurrenceSubscription(): BelongsTo
+    {
+        return $this->belongsTo(RecurrenceSubscription::class);
     }
 }

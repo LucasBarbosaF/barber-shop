@@ -62,25 +62,42 @@
     <div class="card mb-3">
         <div class="card-body">
             <form method="GET" action="{{ route('app.agenda.index') }}">
+                <input type="hidden" name="view" value="{{ $view }}">
                 <div class="row align-items-end g-3">
-                    <div class="col-12 col-sm-6 col-md-3 col-xl-2">
-                        <label for="start_date" class="form-label">Data inicial</label>
-                        <input id="start_date" name="start_date" type="date" value="{{ $date }}"
-                               class="form-control @error('start_date') is-invalid @enderror"
-                               data-agenda-start-date required>
-                        @error('start_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3 col-xl-2">
-                        <label for="end_date" class="form-label">Data final</label>
-                        <input id="end_date" name="end_date" type="date" value="{{ $endDate }}"
-                               min="{{ $date }}" class="form-control @error('end_date') is-invalid @enderror"
-                               data-agenda-end-date required>
-                        @error('end_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @if ($view === 'list')
+                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+                            <label for="start_date" class="form-label">Data inicial</label>
+                            <input id="start_date" name="start_date" type="date" value="{{ $date }}"
+                                   class="form-control @error('start_date') is-invalid @enderror"
+                                   data-agenda-start-date required>
+                            @error('start_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+                            <label for="end_date" class="form-label">Data final</label>
+                            <input id="end_date" name="end_date" type="date" value="{{ $endDate }}"
+                                   min="{{ $date }}" class="form-control @error('end_date') is-invalid @enderror"
+                                   data-agenda-end-date required>
+                            @error('end_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @else
+                        {{--
+                            Nas visões de calendário o período sai da data âncora (mini calendário e
+                            setas), então o campo é um único dia: é ele que vira `date` na URL e
+                            mantém a visão atual ao aplicar os filtros.
+                        --}}
+                        <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+                            <label for="date" class="form-label">Data</label>
+                            <input id="date" name="date" type="date" value="{{ $anchorDate }}"
+                                   class="form-control @error('date') is-invalid @enderror" required>
+                            @error('date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     <div class="col-12 col-md-6 col-xl">
                         <label for="search" class="form-label">Encontrar cliente</label>
                         <div class="input-group">
@@ -145,8 +162,13 @@
                 <div class="agenda-extra-filters-content">
                     <form method="GET" action="{{ route('app.agenda.index') }}"
                           class="row align-items-end g-3">
-                        <input type="hidden" name="start_date" value="{{ $date }}">
-                        <input type="hidden" name="end_date" value="{{ $endDate }}">
+                        <input type="hidden" name="view" value="{{ $view }}">
+                        @if ($view === 'list')
+                            <input type="hidden" name="start_date" value="{{ $date }}">
+                            <input type="hidden" name="end_date" value="{{ $endDate }}">
+                        @else
+                            <input type="hidden" name="date" value="{{ $anchorDate }}">
+                        @endif
                         <input type="hidden" name="search" value="{{ $searchTerm }}">
                         @if ($isBarber)
                             <input type="hidden" name="barber_id" value="{{ $ownBarber?->getKey() }}">

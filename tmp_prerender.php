@@ -2,10 +2,11 @@
 
 require 'vendor/autoload.php';
 $app = require 'bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use Illuminate\Contracts\Console\Kernel;
 
 $outDir = '/mnt/c/Users/ADM/AppData/Local/Temp/opencode/render';
 if (! is_dir($outDir)) {
@@ -23,6 +24,7 @@ function save(string $name, string $html): void
             if (! is_file($p)) {
                 return '';
             }
+
             return '<style>'."\n".file_get_contents($p)."\n".'</style>';
         },
         $html
@@ -34,6 +36,7 @@ function save(string $name, string $html): void
             if (! is_file($p)) {
                 return '';
             }
+
             return '<script type="module">'."\n".file_get_contents($p)."\n".'</script>';
         },
         $html
@@ -49,6 +52,7 @@ function login(Client $client, string $email, string $password): bool
     $html = (string) $res->getBody();
     if (! preg_match('/name="_token" value="([^"]+)"/', $html, $m)) {
         echo "no csrf token\n";
+
         return false;
     }
     $client->post('/login', [
@@ -72,7 +76,7 @@ function renderRoutes(Client $client, string $tag, array $routes): void
             } else {
                 echo "SKIP {$path} => {$res->getStatusCode()}\n";
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             echo "ERR  {$path} => ".$e->getMessage()."\n";
         }
     }

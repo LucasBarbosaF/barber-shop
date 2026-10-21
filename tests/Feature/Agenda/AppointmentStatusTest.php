@@ -168,11 +168,16 @@ describe('status do agendamento na agenda', function () {
 
     it('oferece o menu de status na lista da agenda', function () {
         [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
-        appointmentForStatusChange($tenant, AppointmentStatus::Pending);
+        $appointment = appointmentForStatusChange($tenant, AppointmentStatus::Pending);
 
         $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
             ->actingAs($admin)
-            ->get(route('app.agenda.index', ['view' => 'list', 'start_date' => now()->toDateString()]))
+            ->get(route('app.agenda.index', [
+                'view' => 'list',
+                // A data do atendimento, não a de agora: o fixture é now()+1h
+                // e cruza a virada do dia quando o teste roda perto da meia-noite.
+                'start_date' => $appointment->starts_at->toDateString(),
+            ]))
             ->assertOk()
             ->assertSee('Mudar status')
             ->assertSee('Confirmado')
@@ -183,11 +188,14 @@ describe('status do agendamento na agenda', function () {
 
     it('esconde o menu quando o status não tem transição (em atendimento/concluído)', function () {
         [$tenant, $admin] = tenantWithUser(MembershipRole::Admin);
-        appointmentForStatusChange($tenant, AppointmentStatus::Completed);
+        $appointment = appointmentForStatusChange($tenant, AppointmentStatus::Completed);
 
         $this->withSession(['current_tenant_id' => (string) $tenant->getKey()])
             ->actingAs($admin)
-            ->get(route('app.agenda.index', ['view' => 'list', 'start_date' => now()->toDateString()]))
+            ->get(route('app.agenda.index', [
+                'view' => 'list',
+                'start_date' => $appointment->starts_at->toDateString(),
+            ]))
             ->assertOk()
             ->assertSee('Concluído')
             ->assertDontSee('Mudar status');
