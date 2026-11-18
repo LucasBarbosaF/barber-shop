@@ -28,11 +28,12 @@ class LinkPagamentoService
             'subscriptionCycle' => 'MONTHLY',
             'externalReference' => (string) $subscription->id,
             'isAddressRequired' => false,
+            'dueDateLimitDays' => 0
         ]);
 
 
         if ($response->failed()) {
-            throw new \Exception('Erro ao gerar link de pagamento: ' . $response->json());
+            throw new \Exception('Erro ao gerar link de pagamento: ');
         }
 
         $responseData = $response->json();
@@ -62,6 +63,7 @@ class LinkPagamentoService
 
         switch ($event) {
             case 'PAYMENT_CONFIRMED':
+            case 'PAYMENT_RECEIVED':
                 DB::statement(
                     "SELECT set_config('app.current_tenant', ?, false)",
                     [(string) 2]
@@ -115,7 +117,7 @@ class LinkPagamentoService
         ]);
 
         if( $response->failed()) {
-            throw new \Exception('Erro ao atualizar a assinatura: ' . $response->json());
+            throw new \Exception('Erro ao atualizar a assinatura: ');
         }
     }
 
@@ -131,7 +133,7 @@ class LinkPagamentoService
         ]);
 
         if ($response->failed()) {
-            throw new \Exception('Erro ao inativar link de pagamento: ' . $response->json());
+            throw new \Exception('Erro ao inativar link de pagamento: ');
         }
     }
 }
