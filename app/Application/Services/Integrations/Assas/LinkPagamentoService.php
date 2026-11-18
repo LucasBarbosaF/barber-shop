@@ -91,7 +91,8 @@ class LinkPagamentoService
                 ]);
 
                 LinkPagamentoService::inativarLinkPagamento($payment['paymentLink']);
-
+                LinkPagamentoService::atualizarSubscription($payment['subscription'], $subscription);
+                
                 break;
             default:
                 return response()->json([
@@ -99,6 +100,22 @@ class LinkPagamentoService
                     'message' => 'Evento recebido, sem tratamento',
                     'event' => $event
                 ]);
+        }
+    }
+
+    private static function atualizarSubscription(String $subscriptionId, RecurrenceSubscription $subscription): void
+    {
+        $response = Http::withHeaders([
+            'access_token' => env('ASAAS_API_KEY'),
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'User-Agent' => 'Barbear Shop',
+        ])->put(env('ASAAS_BASE_URL') . "/subscriptions/{$subscriptionId}", [
+            'endDate' => $subscription->ends_at->format('Y-m-d'),
+        ]);
+
+        if( $response->failed()) {
+            throw new \Exception('Erro ao atualizar a assinatura: ' . $response->json());
         }
     }
 
