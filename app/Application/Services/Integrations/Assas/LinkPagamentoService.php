@@ -61,7 +61,7 @@ class LinkPagamentoService
 
         switch ($event) {
             case 'PAYMENT_CONFIRMED':
-                $subscription = RecurrenceSubscription::where('external_id', $payment['paymentLink'])->firstOrFail();
+                $subscription = RecurrenceSubscription::where('id', $payment['externalReference'])->firstOrFail();
                 $subscription->status = 'active';
                 $subscription->paid_amount = $payment['value'];
                 $subscription->paid_at = now();
