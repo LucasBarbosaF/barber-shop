@@ -2,6 +2,7 @@
 
 namespace App\Application\Recurrence\Actions;
 
+use App\Application\Services\Integrations\Assas\LinkPagamentoService;
 use App\Application\Shared\Actions\Action;
 use App\Domain\Recurrence\Enums\SubscriptionStatus;
 use App\Models\Appointment;
@@ -107,6 +108,9 @@ final class CreateSubscription extends Action
                     'allow_unpaid' => true,
                 ])['appointment'];
             }
+
+            /** @var RecurrenceSubscription $subscription */
+            $subscription = LinkPagamentoService::gerarLinkPagamento($plan, $subscription);
 
             return [
                 'subscription' => $subscription->load(['customer', 'plan', 'barber', 'service']),

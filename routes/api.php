@@ -1,5 +1,6 @@
 <?php
 
+use App\Application\Services\Integrations\Assas\LinkPagamentoService;
 use App\Http\Controllers\WhatsAppWebhookController;
 use App\Http\Middleware\SetWhatsAppWebhookTenant;
 use App\Http\Middleware\VerifyWhatsAppSignature;
@@ -23,4 +24,9 @@ Route::prefix('webhooks/whatsapp')->group(function (): void {
 
     Route::post('/', [WhatsAppWebhookController::class, 'receive'])
         ->middleware([VerifyWhatsAppSignature::class, SetWhatsAppWebhookTenant::class]);
+});
+
+
+Route::post('/webhook/asaas', function(Request $request) {
+    LinkPagamentoService::webHookLinkPagamento($request);
 });

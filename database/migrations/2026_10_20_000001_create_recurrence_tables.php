@@ -60,6 +60,7 @@ return new class extends Migration
             $table->timestamp('cash_posted_at')->nullable();
             $table->timestamp('canceled_at')->nullable();
             $table->string('cancelation_reason', 255)->nullable();
+            $table->string('external_id', 255)->nullable();
             $table->boolean('cancel_future_appointments')->default(false);
             $table->timestamps();
 

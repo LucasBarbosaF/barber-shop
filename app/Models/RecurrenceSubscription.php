@@ -61,6 +61,8 @@ class RecurrenceSubscription extends TenantScopedModel
         'canceled_at',
         'cancelation_reason',
         'cancel_future_appointments',
+        'paid_obs',
+        'external_id',
     ];
 
     protected function casts(): array
