@@ -7,6 +7,7 @@ use App\Models\RecurrencePlan;
 use App\Models\RecurrenceSubscription;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class LinkPagamentoService
@@ -61,6 +62,11 @@ class LinkPagamentoService
 
         switch ($event) {
             case 'PAYMENT_CONFIRMED':
+                DB::statement(
+                    "SELECT set_config('app.current_tenant', ?, false)",
+                    [(string) 2]
+                );
+                
                 $subscription = RecurrenceSubscription::where('id', $payment['externalReference'])->firstOrFail();
                 $subscription->status = 'active';
                 $subscription->paid_amount = $payment['value'];
